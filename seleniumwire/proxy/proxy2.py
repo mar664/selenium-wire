@@ -73,7 +73,7 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
         try:
             req_body_modified = self.request_handler(req, req_body)
         except SkipRequest as e:
-            print("Skipped", req.path)
+            self.log_message("Skipped request to : {0}".format(req.path))
             self.send_error(404)
             return
 
