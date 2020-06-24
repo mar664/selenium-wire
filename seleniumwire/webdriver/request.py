@@ -164,6 +164,29 @@ class InspectRequestsMixin:
     def skip_rules(self):
         self._client.reset_skip_rules()
 
+    @property
+    def allow_rules(self):
+        """The URL patterns used to skip_rules request cancelling.
+
+        The value of the scopes should be a list (or tuple) of
+        regular expressions.
+
+        For example:
+            skip_rules = [
+                '.*stackoverflow.*',
+                '.*github.*'
+            ]
+        """
+        return self._client.get_allow_rules()
+
+    @allow_rules.setter
+    def allow_rules(self, allow_rules):
+        self._client.set_allow_rules(allow_rules)
+
+    @allow_rules.deleter
+    def allow_rules(self):
+        self._client.reset_allow_rules()
+
 
 class Request:
     """Represents a captured browser request."""

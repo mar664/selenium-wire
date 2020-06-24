@@ -59,6 +59,13 @@ class AdminMixin:
                 self._clear_skip_rules()
             elif self.command == 'GET':
                 self._get_skip_rules()
+        elif path == '/allow_rules':
+            if self.command == 'POST':
+                self._set_allow_rules()
+            elif self.command == 'DELETE':
+                self._clear_allow_rules()
+            elif self.command == 'GET':
+                self._get_allow_rules()
         elif path == '/scopes':
             if self.command == 'POST':
                 self._set_scopes()
@@ -149,6 +156,23 @@ class AdminMixin:
 
     def _get_skip_rules(self):
         self._send_response(json.dumps(self.server.modifier.skip_rules).encode(
+            'utf-8'), 'application/json')
+
+    def _set_allow_rules(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        req_body = self.rfile.read(content_length)
+        allow_rules = json.loads(req_body.decode('utf-8'))
+        self.server.modifier.allow_rules = allow_rules
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _clear_allow_rules(self):
+        del self.server.modifier.allow_rules
+        self._send_response(json.dumps({'status': 'ok'}).encode(
+            'utf-8'), 'application/json')
+
+    def _get_allow_rules(self):
+        self._send_response(json.dumps(self.server.modifier.allow_rules).encode(
             'utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):

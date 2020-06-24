@@ -210,6 +210,25 @@ class RequestModifierTest(TestCase):
         with self.assertRaises(SkipRequest):
             self.modifier.modify(mock_request)
 
+    def test_does_allow_url(self):
+        self.modifier.allow_rules = [
+            r'.*prod1.server.com.*'
+        ]
+
+        mock_request = self._create_mock_request()
+
+        self.modifier.modify(mock_request)
+
+    def test_doesnt_allow_url(self):
+        self.modifier.allow_rules = [
+            r'.*prod2.server.com.*'
+        ]
+
+        mock_request = self._create_mock_request()
+
+        with self.assertRaises(SkipRequest):
+            self.modifier.modify(mock_request)
+
     def _create_mock_request(self,
                              path="https://prod1.server.com/some/path/12345"):
         mock_request = Mock()

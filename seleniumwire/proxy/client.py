@@ -217,6 +217,22 @@ class AdminClient:
         """Gets any previously set scopes"""
         return self._make_request('GET', '/skip_rules')
 
+    def set_allow_rules(self, allow_rules):
+        """Sets the scopes for the seleniumwire to log/modify request and response.
+
+        Args:
+            scopes: a regex string or list of regex string.
+        """
+        self._make_request('POST', '/allow_rules', data=allow_rules)
+
+    def reset_allow_rules(self):
+        """Reset scopes to let proxy capture all requests."""
+        self._make_request('DELETE', '/allow_rules')
+
+    def get_allow_rules(self):
+        """Gets any previously set scopes"""
+        return self._make_request('GET', '/allow_rules')
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)
