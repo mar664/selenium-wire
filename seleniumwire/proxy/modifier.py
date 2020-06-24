@@ -250,29 +250,30 @@ class RequestModifier:
 
     def _skip_url(self, request):
         with self._lock:
-            if is_list_alike(self._skip_rules):
-                self._matched_skip_rules(self._skip_rules, request.path)
+            skip_rules = self._skip_rules[:]
+        if is_list_alike(skip_rules):
+            if self._matched_skip_rules(skip_rules, request.path):
+                raise SkipRequest
 
     def _allow_url(self, request):
         with self._lock:
-            if is_list_alike(self._allow_rules) and self._allow_rules:
-                self._matched_allow_rules(self._allow_rules, request.path)
+            allow_rules = self._allow_rules[:]
+        if is_list_alike(allow_rules) and allow_rules:
+            if self._matched_allow_rules(allow_rules, request.path):
+                raise SkipRequest
 
     def _matched_skip_rules(self, skip_rules, path):
         for pattern in skip_rules:
             match = re.search(pattern, path)
             if match:
-                raise SkipRequest
+                return True
 
     def _matched_allow_rules(self, allow_rules, path):
-        matched = False
         for pattern in allow_rules:
             match = re.search(pattern, path)
             if match:
-                matched = True
-                break
-        if not matched:
-            raise SkipRequest
+                return False
+        return True
 
     def _matched_headers(self, header_rules, path):
         results = {}
