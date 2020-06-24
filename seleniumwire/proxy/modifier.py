@@ -255,7 +255,7 @@ class RequestModifier:
 
     def _allow_url(self, request):
         with self._lock:
-            if is_list_alike(self._allow_rules):
+            if is_list_alike(self._allow_rules) and self._allow_rules:
                 self._matched_allow_rules(self._allow_rules, request.path)
 
     def _matched_skip_rules(self, skip_rules, path):
