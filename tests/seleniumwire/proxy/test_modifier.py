@@ -1,6 +1,6 @@
 from unittest import TestCase
 from unittest.mock import Mock
-
+from seleniumwire.proxy.proxy2 import SkipRequest
 from seleniumwire.proxy.modifier import RequestModifier
 
 
@@ -200,6 +200,15 @@ class RequestModifierTest(TestCase):
         self.modifier.modify(mock_request)
 
         self.assertNotIn('Host', mock_request.headers)
+
+    def test_skip_url(self):
+        self.modifier.skip_rules = [
+            r'.*prod1.server.com.*'
+        ]
+        mock_request = self._create_mock_request()
+
+        with self.assertRaises(SkipRequest):
+            self.modifier.modify(mock_request)
 
     def _create_mock_request(self,
                              path="https://prod1.server.com/some/path/12345"):
