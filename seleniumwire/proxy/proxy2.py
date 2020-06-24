@@ -18,6 +18,8 @@ from http.server import BaseHTTPRequestHandler
 
 from . import cert, socks
 
+class SkipRequest(Exception):
+    pass
 
 class ProxyRequestHandler(BaseHTTPRequestHandler):
     admin_path = None
@@ -68,7 +70,12 @@ class ProxyRequestHandler(BaseHTTPRequestHandler):
             else:
                 req.path = 'http://{}'.format(path)
 
-        req_body_modified = self.request_handler(req, req_body)
+        try:
+            req_body_modified = self.request_handler(req, req_body)
+        except SkipRequest:
+            self.send_error(404)
+            return
+
         if req_body_modified is False:
             self.send_error(403)
             return
