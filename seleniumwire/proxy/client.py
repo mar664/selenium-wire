@@ -201,6 +201,22 @@ class AdminClient:
         """Gets any previously set scopes"""
         return self._make_request('GET', '/scopes')
 
+    def set_skip_rules(self, skip_rules):
+        """Sets the scopes for the seleniumwire to log/modify request and response.
+
+        Args:
+            scopes: a regex string or list of regex string.
+        """
+        self._make_request('POST', '/skip_rules', data=skip_rules)
+
+    def reset_skip_rules(self):
+        """Reset scopes to let proxy capture all requests."""
+        self._make_request('DELETE', '/skip_rules')
+
+    def get_skip_rules(self):
+        """Gets any previously set scopes"""
+        return self._make_request('GET', '/skip_rules')
+
     def _make_request(self, command, path, data=None):
         url = '{}{}'.format(ADMIN_PATH, path)
         conn = http.client.HTTPConnection(self._proxy_addr, self._proxy_port)
