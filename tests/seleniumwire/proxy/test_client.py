@@ -327,10 +327,8 @@ class AdminClientIntegrationTest(TestCase):
 
         self._make_request('https://github.com')
 
-        try:
-            self._make_request('https://google.com')
-        except urllib.error.HTTPError as e:
-            self.assertEqual(e.code, 406)
+        self._make_request('https://google.com')
+
 
     def test_reset_allow_rules(self):
         self.client.set_allow_rules(('.*stackoverflow.*', '.*github.*'))
