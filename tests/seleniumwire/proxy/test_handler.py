@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import call, Mock
 
 from seleniumwire.proxy.handler import CaptureRequestHandler
+from seleniumwire.proxy.proxy2 import SkipRequest
 
 
 class CaptureRequestHandlerTest(TestCase):
@@ -37,6 +38,29 @@ class CaptureRequestHandlerTest(TestCase):
 
         self.mock_storage.save_request.assert_called_once_with(self.handler, self.body)
 
+    def test_skip_url(self):
+        self.handler.server.skip_rules = [
+            r'.*google.com.*'
+        ]
+
+        with self.assertRaises(SkipRequest):
+            self.handler.request_handler(self.handler, self.body)
+
+    def test_does_allow_url(self):
+        self.handler.server.allow_rules = [
+            r'.*google.com.*'
+        ]
+
+        self.handler.request_handler(self.handler, self.body)
+
+    def test_doesnt_allow_url(self):
+        self.handler.server.allow_rules = [
+            r'.*prod2.server.com.*'
+        ]
+
+        with self.assertRaises(SkipRequest):
+            self.handler.request_handler(self.handler, self.body)
+
     def test_save_response_called(self):
         res, res_body = Mock(), Mock()
         self.handler.response_handler(self.handler, self.body, res, res_body)
@@ -60,6 +84,8 @@ class CaptureRequestHandlerTest(TestCase):
         self.handler.server.storage = self.mock_storage
         self.handler.server.options = {}
         self.handler.server.scopes = []
+        self.handler.server.allow_rules = []
+        self.handler.server.skip_rules = []
         self.handler.path = 'https://www.google.com/foo/bar?x=y'
         self.handler.command = 'GET'
         self.body = None

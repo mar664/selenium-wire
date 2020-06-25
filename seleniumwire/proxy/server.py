@@ -58,6 +58,10 @@ class ProxyHTTPServer(BoundedThreadingMixin, HTTPServer):
         # The scope of requests we're interested in capturing.
         self.scopes = []
 
+        self.allow_rules = []
+
+        self.skip_rules = []
+
         super().__init__(self.options.get('max_threads', 9999), *args, **kwargs)
 
     def _merge_with_env(self, proxy_config):

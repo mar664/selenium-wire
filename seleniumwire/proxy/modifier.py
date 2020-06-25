@@ -107,96 +107,12 @@ class RequestModifier:
         with self._lock:
             self._rewrite_rules.clear()
 
-    @property
-    def skip_rules(self):
-        """The rules used to rewrite request URLs.
-
-        The value of the rewrite rules should be a list of sublists (or tuples)
-        with each sublist containing the pattern and replacement.
-
-        For example:
-            rewrite_rules = [
-                ('pattern', 'replacement'),
-                ('pattern', 'replacement'),
-            ]
-        """
-        with self._lock:
-            return [pat.pattern for pat in self._skip_rules]
-
-    @skip_rules.setter
-    def skip_rules(self, skip_rules):
-        """Sets the rewrite rules used to modify request URLs.
-
-        Args:
-            rewrite_rules: The list of rewrite rules, which should
-                be a list of sublists, with each sublist having two
-                elements - the pattern and replacement.
-        """
-        compiled = []
-        for pattern in skip_rules:
-            compiled.append(re.compile(pattern))
-
-        with self._lock:
-            self._skip_rules = compiled
-
-    @skip_rules.deleter
-    def skip_rules(self):
-        """Clears the rewrite rules being used to modify request URLs.
-
-        After this is called, request URLs will no longer be modified.
-        """
-        with self._lock:
-            self._skip_rules.clear()
-
-    @property
-    def allow_rules(self):
-        """The rules used to rewrite request URLs.
-
-        The value of the rewrite rules should be a list of sublists (or tuples)
-        with each sublist containing the pattern and replacement.
-
-        For example:
-            rewrite_rules = [
-                ('pattern', 'replacement'),
-                ('pattern', 'replacement'),
-            ]
-        """
-        with self._lock:
-            return [pat.pattern for pat in self._allow_rules]
-
-    @allow_rules.setter
-    def allow_rules(self, allow_rules):
-        """Sets the rewrite rules used to modify request URLs.
-
-        Args:
-            rewrite_rules: The list of rewrite rules, which should
-                be a list of sublists, with each sublist having two
-                elements - the pattern and replacement.
-        """
-        compiled = []
-        for pattern in allow_rules:
-            compiled.append(re.compile(pattern))
-
-        with self._lock:
-            self._allow_rules = compiled
-
-    @allow_rules.deleter
-    def allow_rules(self):
-        """Clears the rewrite rules being used to modify request URLs.
-
-        After this is called, request URLs will no longer be modified.
-        """
-        with self._lock:
-            self._allow_rules.clear()
-
     def modify(self, request):
         """Performs modifications to the request.
 
         Args:
             request: The request (a BaseHTTPHandler instance) to modify.
         """
-        self._skip_url(request)
-        self._allow_url(request)
         self._modify_headers(request)
         self._rewrite_url(request)
 
@@ -247,33 +163,6 @@ class RequestModifier:
             # Modify the Host header if it exists
             if 'Host' in request.headers:
                 request.headers['Host'] = modified_netloc
-
-    def _skip_url(self, request):
-        with self._lock:
-            skip_rules = self._skip_rules[:]
-        if is_list_alike(skip_rules):
-            if self._matched_skip_rules(skip_rules, request.path):
-                raise SkipRequest
-
-    def _allow_url(self, request):
-        with self._lock:
-            allow_rules = self._allow_rules[:]
-        if is_list_alike(allow_rules) and allow_rules:
-            if self._matched_allow_rules(allow_rules, request.path):
-                raise SkipRequest
-
-    def _matched_skip_rules(self, skip_rules, path):
-        for pattern in skip_rules:
-            match = re.search(pattern, path)
-            if match:
-                return True
-
-    def _matched_allow_rules(self, allow_rules, path):
-        for pattern in allow_rules:
-            match = re.search(pattern, path)
-            if match:
-                return False
-        return True
 
     def _matched_headers(self, header_rules, path):
         results = {}

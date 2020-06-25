@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 
 from .util import is_list_alike
 from .proxy2 import ProxyRequestHandler
-
+from .proxy2 import SkipRequest
 log = logging.getLogger(__name__)
 
 ADMIN_PATH = 'http://seleniumwire'
@@ -145,34 +145,34 @@ class AdminMixin:
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         skip_rules = json.loads(req_body.decode('utf-8'))
-        self.server.modifier.skip_rules = skip_rules
+        self.server.skip_rules = skip_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_skip_rules(self):
-        del self.server.modifier.rewrite_rules
+        del self.server.skip_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_skip_rules(self):
-        self._send_response(json.dumps(self.server.modifier.skip_rules).encode(
+        self._send_response(json.dumps(self.server.skip_rules).encode(
             'utf-8'), 'application/json')
 
     def _set_allow_rules(self):
         content_length = int(self.headers.get('Content-Length', 0))
         req_body = self.rfile.read(content_length)
         allow_rules = json.loads(req_body.decode('utf-8'))
-        self.server.modifier.allow_rules = allow_rules
+        self.server.allow_rules = allow_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _clear_allow_rules(self):
-        del self.server.modifier.allow_rules
+        del self.server.allow_rules
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
     def _get_allow_rules(self):
-        self._send_response(json.dumps(self.server.modifier.allow_rules).encode(
+        self._send_response(json.dumps(self.server.allow_rules).encode(
             'utf-8'), 'application/json')
 
     def _send_response(self, body, content_type):
@@ -226,6 +226,16 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             req: The request (an instance of CaptureRequestHandler).
             req_body: The binary request body.
         """
+        not_in_allowed_urls = not self._in_allow(self.server.allow_rules, req.path)
+        if not_in_allowed_urls:
+            log.debug('Not allowed %s request: %s', req.command, req.path)
+            raise SkipRequest
+
+        in_skip_rules = self._in_skip(self.server.skip_rules, req.path)
+        if in_skip_rules:
+            log.debug('Skipping %s request: %s', req.command, req.path)
+            raise SkipRequest
+
         ignore_method = req.command in self.server.options.get(
             'ignore_http_methods', ['OPTIONS'])
         not_in_scope = not self._in_scope(self.server.scopes, req.path)
@@ -288,6 +298,28 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
             scopes = [scopes]
         for scope in scopes:
             match = re.search(scope, path)
+            if match:
+                return True
+        return False
+
+    def _in_allow(self, allows, path):
+        if not allows:
+            return True
+        elif not is_list_alike(allows):
+            allows = [allows]
+        for allow in allows:
+            match = re.search(allow, path)
+            if match:
+                return True
+        return False
+
+    def _in_skip(self, skips, path):
+        if not skips:
+            return False
+        elif not is_list_alike(skips):
+            skips = [skips]
+        for skip in skips:
+            match = re.search(skip, path)
             if match:
                 return True
         return False
