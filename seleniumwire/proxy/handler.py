@@ -150,7 +150,7 @@ class AdminMixin:
             'utf-8'), 'application/json')
 
     def _clear_skip_rules(self):
-        del self.server.skip_rules
+        self.server.skip_rules = []
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 
@@ -167,7 +167,7 @@ class AdminMixin:
             'utf-8'), 'application/json')
 
     def _clear_allow_rules(self):
-        del self.server.allow_rules
+        self.server.allow_rules = []
         self._send_response(json.dumps({'status': 'ok'}).encode(
             'utf-8'), 'application/json')
 

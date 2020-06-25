@@ -4,6 +4,7 @@ import urllib.error
 import urllib.request
 
 from seleniumwire.proxy.client import AdminClient
+from seleniumwire.proxy.proxy2 import SkipRequest
 
 
 class AdminClientIntegrationTest(TestCase):
@@ -270,6 +271,78 @@ class AdminClientIntegrationTest(TestCase):
         self.client.set_scopes(('.*stackoverflow.*', '.*github.*'))
 
         self.assertEqual(self.client.get_scopes(), ['.*stackoverflow.*', '.*github.*'
+                                                    ])
+
+    def test_set_single_scopes(self):
+        self.client.set_scopes('.*stackoverflow.*')
+
+        self._make_request('https://stackoverflow.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+
+        self._make_request('https://github.com')
+
+        last_request = self.client.get_last_request()
+
+        self.assertEqual(last_request['path'], 'https://stackoverflow.com/')
+        self.assertEqual(last_request['headers']['Host'], 'stackoverflow.com')
+        self.assertNotEqual(last_request['path'], 'https://github.com/')
+        self.assertNotEqual(last_request['headers']['Host'], 'github.com')
+
+    def test_set_multiple_skip_rules(self):
+        self.client.set_skip_rules(('.*stackoverflow.*', '.*github.*'))
+
+        try:
+            self._make_request('https://stackoverflow.com')
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 406)
+
+        try:
+            self._make_request('https://github.com')
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 406)
+
+        self._make_request('https://google.com')
+
+    def test_reset_skip_rules(self):
+        self.client.set_skip_rules(('.*stackoverflow.*', '.*github.*'))
+        self.client.reset_skip_rules()
+
+        self._make_request('https://www.stackoverflow.com')
+        self.assertTrue(self.client.get_last_request())
+
+    def test_get_skip_rules(self):
+        self.client.set_skip_rules(('.*stackoverflow.*', '.*github.*'))
+
+        self.assertEqual(self.client.get_skip_rules(), ['.*stackoverflow.*', '.*github.*'
+                                                    ])
+
+    def test_set_multiple_allow_rules(self):
+        self.client.set_allow_rules(('.*stackoverflow.*', '.*github.*'))
+
+        self._make_request('https://stackoverflow.com')
+
+        self._make_request('https://github.com')
+
+        try:
+            self._make_request('https://google.com')
+        except urllib.error.HTTPError as e:
+            self.assertEqual(e.code, 406)
+
+    def test_reset_allow_rules(self):
+        self.client.set_allow_rules(('.*stackoverflow.*', '.*github.*'))
+        self.client.reset_allow_rules()
+
+        self._make_request('https://www.stackoverflow.com')
+        self.assertTrue(self.client.get_last_request())
+
+    def test_get_allow_rules(self):
+        self.client.set_allow_rules(('.*stackoverflow.*', '.*github.*'))
+
+        self.assertEqual(self.client.get_allow_rules(), ['.*stackoverflow.*', '.*github.*'
                                                     ])
 
     def test_disable_encoding(self):
