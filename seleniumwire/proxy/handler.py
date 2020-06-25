@@ -228,6 +228,7 @@ class CaptureRequestHandler(AdminMixin, ProxyRequestHandler):
         """
         not_in_allowed_urls = not self._in_allow(self.server.allow_rules, req.path)
         if not_in_allowed_urls:
+            log.debug(self.server.allow_rules)
             log.debug('Not allowed %s request: %s', req.command, req.path)
             raise SkipRequest
 
