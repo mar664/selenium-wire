@@ -329,6 +329,8 @@ class AdminClientIntegrationTest(TestCase):
 
         self._make_request('https://google.com')
 
+        self.assertNotEqual(self.client.get_last_request()["path"], 'https://google.com')
+
 
     def test_reset_allow_rules(self):
         self.client.set_allow_rules(('.*stackoverflow.*', '.*github.*'))
